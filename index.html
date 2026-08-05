@@ -8,7 +8,7 @@
 </head>
 <body>
 <!--
-  CURSO DE FÍSICA (Prof. Mag. Bernardo Pombo)· GRÁFICAS XY
+  CURSO DE FÍSICA · GRÁFICAS XY
   Aplicación web autónoma para publicar mediante GitHub Pages e insertar en Blogger.
   No requiere bibliotecas externas ni envía datos a servidores.
 -->
@@ -499,10 +499,10 @@
 
   <div class="pxy-shell">
     <header class="pxy-header">
-      <p class="pxy-kicker">Curso de Física 2EMS (Prof. Mag. Bernardo Pombo).</p>
+      <p class="pxy-kicker">Curso de Física</p>
       <h2>Gráficas XY</h2>
       <p class="pxy-subtitle">
-        Ingresa datos positivos o negativos, represéntalos y calcula ajustes lineales,
+        Ingrese datos positivos o negativos, represéntelos y calcule ajustes lineales,
         cuadráticos o exponenciales con incertidumbres estadísticas.
       </p>
     </header>
@@ -846,11 +846,13 @@
         if (!Number.isFinite(value)) return value;
         if (Object.is(value, -0) || value === 0) return 0;
 
-        const significantDigits = Math.max(1, Math.min(12, state.minInputSigFigs || 6));
+        const significantDigits = Math.max(2, Math.min(12, state.minInputSigFigs || 6));
         const decimalPlaces = Math.max(0, Math.min(12, state.minInputDecimalPlaces ?? 2));
 
-        // Primero respeta la menor cantidad de cifras significativas de los datos
-        // no nulos y luego limita la escritura a la resolución decimal de entrada.
+        // Respeta la menor cantidad de cifras significativas de los datos
+        // no nulos, con un mínimo de dos para evitar redondeos excesivos como
+        // 4,91548 → 5,0. Después conserva la resolución decimal efectivamente
+        // ingresada, para que un valor entero no elimine los decimales útiles.
         const roundedToSigFigs = Number(value.toPrecision(significantDigits));
         const roundedToDecimals = Number(roundedToSigFigs.toFixed(decimalPlaces));
         return Object.is(roundedToDecimals, -0) ? 0 : roundedToDecimals;
@@ -949,7 +951,7 @@
           ? Math.min(...significantFigures)
           : 6;
         state.minInputDecimalPlaces = decimalPlaces.length > 0
-          ? Math.min(...decimalPlaces)
+          ? Math.max(...decimalPlaces)
           : 2;
         return points;
       }
