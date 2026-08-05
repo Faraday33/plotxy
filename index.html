@@ -8,7 +8,7 @@
 </head>
 <body>
 <!--
-  CURSO DE FÍSICA · GRÁFICAS XY
+  CURSO DE FÍSICA (Prof. Mag. Bernardo Pombo)· GRÁFICAS XY
   Aplicación web autónoma para publicar mediante GitHub Pages e insertar en Blogger.
   No requiere bibliotecas externas ni envía datos a servidores.
 -->
@@ -499,10 +499,10 @@
 
   <div class="pxy-shell">
     <header class="pxy-header">
-      <p class="pxy-kicker">Curso de Física</p>
+      <p class="pxy-kicker">Curso de Física 2EMS (Prof. Mag. Bernardo Pombo).</p>
       <h2>Gráficas XY</h2>
       <p class="pxy-subtitle">
-        Ingrese datos positivos o negativos, represéntelos y calcule ajustes lineales,
+        Ingresa datos positivos o negativos, represéntalos y calcula ajustes lineales,
         cuadráticos o exponenciales con incertidumbres estadísticas.
       </p>
     </header>
@@ -515,12 +515,12 @@
           <label>
             Etiqueta del eje X
             <input id="pxy-label-x" type="text" value="x" maxlength="80" autocomplete="off">
-            <span class="pxy-help">Ejemplo: Tiempo (s)</span>
+            <span class="pxy-help">Ejemplo: Tiempo (s). La unidad entre paréntesis se usará en los coeficientes del ajuste.</span>
           </label>
           <label>
             Etiqueta del eje Y
             <input id="pxy-label-y" type="text" value="y" maxlength="80" autocomplete="off">
-            <span class="pxy-help">Ejemplo: Posición (m)</span>
+            <span class="pxy-help">Ejemplo: Posición (m). Se admiten unidades como m, m^2, m/s o m/s^2.</span>
           </label>
         </div>
 
@@ -653,6 +653,137 @@
         if (normalized === "") return null;
         const number = Number(normalized);
         return Number.isFinite(number) ? number : NaN;
+      }
+
+      function extractUnit(label) {
+        const match = String(label).trim().match(/\(([^()]*)\)\s*$/);
+        return match ? match[1].trim() : "";
+      }
+
+      function superscriptInteger(value) {
+        const map = {
+          "-": "⁻",
+          "+": "⁺",
+          "0": "⁰",
+          "1": "¹",
+          "2": "²",
+          "3": "³",
+          "4": "⁴",
+          "5": "⁵",
+          "6": "⁶",
+          "7": "⁷",
+          "8": "⁸",
+          "9": "⁹"
+        };
+        return String(value).split("").map(character => map[character] || character).join("");
+      }
+
+      function parseUnitExpression(unit) {
+        const source = String(unit)
+          .trim()
+          .replace(/·|×/g, "*")
+          .replace(/\s+/g, "")
+          .replace(/[()]/g, "");
+
+        if (!source || source === "1") return new Map();
+
+        const tokens = source.split(/([*/])/).filter(Boolean);
+        const powers = new Map();
+        let denominator = false;
+
+        for (const token of tokens) {
+          if (token === "*") continue;
+          if (token === "/") {
+            denominator = true;
+            continue;
+          }
+
+          const match = token.match(/^([A-Za-zÀ-ÿµμΩ°%]+)(?:\^([+-]?\d+))?$/);
+          if (!match) return null;
+
+          const symbol = match[1];
+          const exponent = Number(match[2] || 1) * (denominator ? -1 : 1);
+          powers.set(symbol, (powers.get(symbol) || 0) + exponent);
+        }
+
+        for (const [symbol, exponent] of [...powers.entries()]) {
+          if (exponent === 0) powers.delete(symbol);
+        }
+        return powers;
+      }
+
+      function formatUnitMap(powers) {
+        if (!powers || powers.size === 0) return "1";
+
+        const factors = [...powers.entries()]
+          .sort(([a], [b]) => a.localeCompare(b, "es"))
+          .map(([symbol, exponent]) => exponent === 1
+            ? symbol
+            : `${symbol}${superscriptInteger(exponent)}`);
+
+        return factors.join(" · ");
+      }
+
+      function deriveUnit(yUnit, xUnit, xPower = 0) {
+        if (xPower === 0) return yUnit || "";
+        if (!xUnit || !yUnit) return "";
+
+        const yPowers = parseUnitExpression(yUnit);
+        const xPowers = parseUnitExpression(xUnit);
+
+        if (yPowers && xPowers) {
+          const result = new Map(yPowers);
+          for (const [symbol, exponent] of xPowers.entries()) {
+            result.set(symbol, (result.get(symbol) || 0) - xPower * exponent);
+          }
+          for (const [symbol, exponent] of [...result.entries()]) {
+            if (exponent === 0) result.delete(symbol);
+          }
+          return formatUnitMap(result);
+        }
+
+        const xText = xPower === 1 ? xUnit : `(${xUnit})${superscriptInteger(xPower)}`;
+        return `${yUnit}/(${xText})`;
+      }
+
+      function inverseUnit(xUnit) {
+        if (!xUnit) return "";
+        const powers = parseUnitExpression(xUnit);
+        if (powers) {
+          const inverse = new Map([...powers.entries()].map(([symbol, exponent]) => [symbol, -exponent]));
+          return formatUnitMap(inverse);
+        }
+        return `1/(${xUnit})`;
+      }
+
+      function getAdjustmentUnits() {
+        const x = extractUnit(state.labels.x);
+        const y = extractUnit(state.labels.y);
+        return {
+          x,
+          y,
+          linearSlope: deriveUnit(y, x, 1),
+          linearIntercept: y,
+          quadraticA: deriveUnit(y, x, 2),
+          quadraticB: deriveUnit(y, x, 1),
+          quadraticC: y,
+          exponentialA: y,
+          exponentialK: inverseUnit(x),
+          residual: y
+        };
+      }
+
+      function formatWithUnit(text, unit) {
+        if (!unit) return text;
+        return unit === "1" ? `${text} (adimensional)` : `${text} ${unit}`;
+      }
+
+      function formatPairWithUnit(value, uncertainty, unit) {
+        return formatWithUnit(formatPair(value, uncertainty), unit);
+      }
+
+      function formatValueWithUnit(value, significantDigits, unit) {
+        return formatWithUnit(formatSmart(value, significantDigits), unit);
       }
 
       function formatSmart(value, significantDigits = 6) {
@@ -807,7 +938,7 @@
           if (xDecimals !== null) decimalPlaces.push(xDecimals);
           if (yDecimals !== null) decimalPlaces.push(yDecimals);
 
-          points.push({ x, y });
+          points.push({ x, y, rawX: xRaw.trim(), rawY: yRaw.trim() });
         }
 
         if (points.length < 2) {
@@ -896,7 +1027,7 @@
         const headX = escapeHtml(state.labels.x);
         const headY = escapeHtml(state.labels.y);
         const body = state.points
-          .map(point => `<tr><td>${formatSmart(point.x, 8)}</td><td>${formatSmart(point.y, 8)}</td></tr>`)
+          .map(point => `<tr><td>${escapeHtml(point.rawX ?? String(point.x).replace(".", ","))}</td><td>${escapeHtml(point.rawY ?? String(point.y).replace(".", ","))}</td></tr>`)
           .join("");
         el.dataPreview.innerHTML = `<table><thead><tr><th>${headX}</th><th>${headY}</th></tr></thead><tbody>${body}</tbody></table>`;
         el.dataPreview.classList.add("is-visible");
@@ -1023,6 +1154,7 @@
             stats: ols
           };
 
+          const units = getAdjustmentUnits();
           const shownSlope = roundEquationValue(slope);
           const shownIntercept = roundEquationValue(intercept);
           const sign = shownIntercept < 0 ? "−" : "+";
@@ -1031,10 +1163,10 @@
             "Ajuste lineal",
             equation,
             [
-              ["Pendiente m", formatPair(slope, uSlope)],
-              ["Ordenada b", formatPair(intercept, uIntercept)],
+              ["Pendiente m", formatPairWithUnit(slope, uSlope, units.linearSlope)],
+              ["Ordenada b", formatPairWithUnit(intercept, uIntercept, units.linearIntercept)],
               ["R²", formatSmart(ols.r2, 6)],
-              ["Error residual s", formatSmart(ols.residualStd, 4)],
+              ["Error residual s", formatValueWithUnit(ols.residualStd, 4, units.residual)],
               ["Datos n", String(state.points.length)],
               ["Grados de libertad", String(ols.df)]
             ],
@@ -1056,6 +1188,7 @@
           const ols = fitOLS(design, y);
           const [c, b, a] = ols.beta;
           const [uC, uB, uA] = ols.standardErrors;
+          const units = getAdjustmentUnits();
 
           state.fit = {
             type: "quadratic",
@@ -1074,11 +1207,11 @@
             "Ajuste cuadrático",
             equation,
             [
-              ["Coeficiente a", formatPair(a, uA)],
-              ["Coeficiente b", formatPair(b, uB)],
-              ["Coeficiente c", formatPair(c, uC)],
+              ["Coeficiente a", formatPairWithUnit(a, uA, units.quadraticA)],
+              ["Coeficiente b", formatPairWithUnit(b, uB, units.quadraticB)],
+              ["Coeficiente c", formatPairWithUnit(c, uC, units.quadraticC)],
               ["R²", formatSmart(ols.r2, 6)],
-              ["Error residual s", formatSmart(ols.residualStd, 4)]
+              ["Error residual s", formatValueWithUnit(ols.residualStd, 4, units.residual)]
             ],
             ols.df > 0
               ? "Incertidumbres: errores estándar de 1σ de los coeficientes del polinomio."
@@ -1106,6 +1239,7 @@
           const [uAlpha, uK] = ols.standardErrors;
           const A = Math.exp(alpha);
           const uA = Number.isFinite(uAlpha) ? A * uAlpha : NaN;
+          const units = getAdjustmentUnits();
           const predictedY = x.map(value => A * Math.exp(k * value));
           const meanY = y.reduce((sum, value) => sum + value, 0) / y.length;
           const sseY = y.reduce((sum, value, i) => sum + (value - predictedY[i]) ** 2, 0);
@@ -1124,11 +1258,11 @@
             "Ajuste exponencial",
             equation,
             [
-              ["Amplitud A", formatPair(A, uA)],
-              ["Constante k", formatPair(k, uK)],
+              ["Amplitud A", formatPairWithUnit(A, uA, units.exponentialA)],
+              ["Constante k", formatPairWithUnit(k, uK, units.exponentialK)],
               ["R² en y", formatSmart(r2Original, 6)],
               ["R² en ln(y)", formatSmart(ols.r2, 6)],
-              ["Error residual en ln(y)", formatSmart(ols.residualStd, 4)],
+              ["Error residual en ln(y)", formatWithUnit(formatSmart(ols.residualStd, 4), "1")],
               ["Grados de libertad", String(ols.df)]
             ],
             ols.df > 0
@@ -1332,6 +1466,25 @@
         ctx.lineTo(yAxisX, margin.top + plotHeight);
         ctx.stroke();
 
+        // Puntas de flecha en el sentido positivo de los ejes.
+        const arrowSize = 8;
+        const xTip = margin.left + plotWidth;
+        ctx.fillStyle = "#243e48";
+        ctx.beginPath();
+        ctx.moveTo(xTip, xAxisY);
+        ctx.lineTo(xTip - arrowSize, xAxisY - arrowSize * 0.58);
+        ctx.lineTo(xTip - arrowSize, xAxisY + arrowSize * 0.58);
+        ctx.closePath();
+        ctx.fill();
+
+        const yTip = margin.top;
+        ctx.beginPath();
+        ctx.moveTo(yAxisX, yTip);
+        ctx.lineTo(yAxisX - arrowSize * 0.58, yTip + arrowSize);
+        ctx.lineTo(yAxisX + arrowSize * 0.58, yTip + arrowSize);
+        ctx.closePath();
+        ctx.fill();
+
         ctx.strokeStyle = "#8ca0a7";
         ctx.lineWidth = 1;
         ctx.strokeRect(margin.left, margin.top, plotWidth, plotHeight);
@@ -1457,7 +1610,7 @@
         if (state.points.length === 0) return;
         const lines = [
           `${state.labels.x}\t${state.labels.y}`,
-          ...state.points.map(point => `${String(point.x).replace(".", ",")}\t${String(point.y).replace(".", ",")}`)
+          ...state.points.map(point => `${point.rawX ?? String(point.x).replace(".", ",")}\t${point.rawY ?? String(point.y).replace(".", ",")}`)
         ];
         const blob = new Blob([lines.join("\n")], { type: "text/plain;charset=utf-8" });
         const url = URL.createObjectURL(blob);
