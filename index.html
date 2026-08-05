@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Curso de Física · Gráficas XY</title>
+<title>Curso de Física 2EMS - Prof. Mag. Bernardo Pombo· Gráficas XY</title>
 <style>body{margin:0;padding:12px;background:#f2f6f7}</style>
 </head>
 <body>
@@ -499,7 +499,7 @@
 
   <div class="pxy-shell">
     <header class="pxy-header">
-      <p class="pxy-kicker">Curso de Física</p>
+      <p class="pxy-kicker">Curso de Física 2EMS - Prof. Mag. Bernardo Pombo·</p>
       <h2>Gráficas XY</h2>
       <p class="pxy-subtitle">
         Ingrese datos positivos o negativos, represéntelos y calcule ajustes lineales,
@@ -846,16 +846,14 @@
         if (!Number.isFinite(value)) return value;
         if (Object.is(value, -0) || value === 0) return 0;
 
-        const significantDigits = Math.max(2, Math.min(12, state.minInputSigFigs || 6));
         const decimalPlaces = Math.max(0, Math.min(12, state.minInputDecimalPlaces ?? 2));
 
-        // Respeta la menor cantidad de cifras significativas de los datos
-        // no nulos, con un mínimo de dos para evitar redondeos excesivos como
-        // 4,91548 → 5,0. Después conserva la resolución decimal efectivamente
-        // ingresada, para que un valor entero no elimine los decimales útiles.
-        const roundedToSigFigs = Number(value.toPrecision(significantDigits));
-        const roundedToDecimals = Number(roundedToSigFigs.toFixed(decimalPlaces));
-        return Object.is(roundedToDecimals, -0) ? 0 : roundedToDecimals;
+        // La ecuación resumida se redondea una única vez a la resolución
+        // decimal más gruesa que aparece explícitamente en los datos
+        // decimales. Así, con datos expresados hasta décimas, 4,91548 se
+        // presenta como 4,9. El panel estadístico conserva el valor completo.
+        const rounded = Number(value.toFixed(decimalPlaces));
+        return Object.is(rounded, -0) ? 0 : rounded;
       }
 
       function formatEquationNumber(value) {
@@ -950,9 +948,14 @@
         state.minInputSigFigs = significantFigures.length > 0
           ? Math.min(...significantFigures)
           : 6;
-        state.minInputDecimalPlaces = decimalPlaces.length > 0
-          ? Math.max(...decimalPlaces)
-          : 2;
+        // Para la ecuación resumida se usa la resolución decimal explícita
+        // más gruesa entre los datos decimales ingresados. Los ceros y los
+        // enteros escritos sin decimales no reducen artificialmente la
+        // precisión de toda la ecuación.
+        const positiveDecimalPlaces = decimalPlaces.filter(value => value > 0);
+        state.minInputDecimalPlaces = positiveDecimalPlaces.length > 0
+          ? Math.min(...positiveDecimalPlaces)
+          : 0;
         return points;
       }
 
