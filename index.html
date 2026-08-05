@@ -631,7 +631,8 @@
         fit: null,
         scale: null,
         labels: { x: "x", y: "y" },
-        minInputSigFigs: 6
+        minInputSigFigs: 6,
+        minInputDecimalPlaces: 2
       };
 
       function showMessage(text, type = "error") {
@@ -696,24 +697,41 @@
         return lastNonZero - firstNonZero + 1;
       }
 
-      function formatEquationNumber(value) {
-        if (!Number.isFinite(value)) return "no estimable";
-        if (Object.is(value, -0) || value === 0) return "0";
+      function countDecimalPlaces(rawValue) {
+        let text = String(rawValue).trim().replace(/\s+/g, "").replace(",", ".");
+        if (!text) return null;
+
+        text = text.replace(/^[+-]/, "");
+        const parts = text.split(/[eE]/);
+        const mantissa = parts[0];
+        const exponent = parts.length > 1 ? Number(parts[1]) : 0;
+        if (!Number.isFinite(exponent) || !/^[0-9]*\.?[0-9]+$/.test(mantissa)) return null;
+
+        const decimalPart = mantissa.includes(".") ? mantissa.split(".")[1].length : 0;
+        return Math.max(0, decimalPart - exponent);
+      }
+
+      function roundEquationValue(value) {
+        if (!Number.isFinite(value)) return value;
+        if (Object.is(value, -0) || value === 0) return 0;
 
         const significantDigits = Math.max(1, Math.min(12, state.minInputSigFigs || 6));
-        const abs = Math.abs(value);
-        let text;
+        const decimalPlaces = Math.max(0, Math.min(12, state.minInputDecimalPlaces ?? 2));
 
-        if (abs >= 1e6 || abs < 1e-4) {
-          text = value.toExponential(significantDigits - 1);
-          text = text.replace(/e\+?(-?)(\d+)/i, (_, negative, exponent) => `e${negative ? "−" : ""}${exponent}`);
-        } else {
-          text = value.toPrecision(significantDigits);
-          if (text.includes("e")) {
-            text = text.replace(/e\+?(-?)(\d+)/i, (_, negative, exponent) => `e${negative ? "−" : ""}${exponent}`);
-          }
-        }
+        // Primero respeta la menor cantidad de cifras significativas de los datos
+        // no nulos y luego limita la escritura a la resolución decimal de entrada.
+        const roundedToSigFigs = Number(value.toPrecision(significantDigits));
+        const roundedToDecimals = Number(roundedToSigFigs.toFixed(decimalPlaces));
+        return Object.is(roundedToDecimals, -0) ? 0 : roundedToDecimals;
+      }
 
+      function formatEquationNumber(value) {
+        const rounded = roundEquationValue(value);
+        if (!Number.isFinite(rounded)) return "no estimable";
+        if (rounded === 0) return "0";
+
+        const decimalPlaces = Math.max(0, Math.min(12, state.minInputDecimalPlaces ?? 2));
+        let text = rounded.toFixed(decimalPlaces);
         return text.replace("-", "−").replace(".", ",");
       }
 
@@ -764,6 +782,7 @@
         const rows = [...el.rows.querySelectorAll(".pxy-data-row")];
         const points = [];
         const significantFigures = [];
+        const decimalPlaces = [];
 
         for (let index = 0; index < rows.length; index += 1) {
           const xRaw = rows[index].querySelector(".pxy-x").value;
@@ -781,8 +800,12 @@
 
           const xSigFigs = x !== 0 ? countSignificantFigures(xRaw) : null;
           const ySigFigs = y !== 0 ? countSignificantFigures(yRaw) : null;
+          const xDecimals = x !== 0 ? countDecimalPlaces(xRaw) : null;
+          const yDecimals = y !== 0 ? countDecimalPlaces(yRaw) : null;
           if (xSigFigs) significantFigures.push(xSigFigs);
           if (ySigFigs) significantFigures.push(ySigFigs);
+          if (xDecimals !== null) decimalPlaces.push(xDecimals);
+          if (yDecimals !== null) decimalPlaces.push(yDecimals);
 
           points.push({ x, y });
         }
@@ -794,6 +817,9 @@
         state.minInputSigFigs = significantFigures.length > 0
           ? Math.min(...significantFigures)
           : 6;
+        state.minInputDecimalPlaces = decimalPlaces.length > 0
+          ? Math.min(...decimalPlaces)
+          : 2;
         return points;
       }
 
@@ -997,8 +1023,10 @@
             stats: ols
           };
 
-          const sign = intercept < 0 ? "−" : "+";
-          const equation = `y = ${formatEquationNumber(slope)} · x ${sign} ${formatEquationNumber(Math.abs(intercept))}`;
+          const shownSlope = roundEquationValue(slope);
+          const shownIntercept = roundEquationValue(intercept);
+          const sign = shownIntercept < 0 ? "−" : "+";
+          const equation = `y = ${formatEquationNumber(shownSlope)} · x ${sign} ${formatEquationNumber(Math.abs(shownIntercept))}`;
           showFitResult(
             "Ajuste lineal",
             equation,
@@ -1036,9 +1064,12 @@
             stats: ols
           };
 
-          const bSign = b < 0 ? "−" : "+";
-          const cSign = c < 0 ? "−" : "+";
-          const equation = `y = ${formatEquationNumber(a)} · x² ${bSign} ${formatEquationNumber(Math.abs(b))} · x ${cSign} ${formatEquationNumber(Math.abs(c))}`;
+          const shownA = roundEquationValue(a);
+          const shownB = roundEquationValue(b);
+          const shownC = roundEquationValue(c);
+          const bSign = shownB < 0 ? "−" : "+";
+          const cSign = shownC < 0 ? "−" : "+";
+          const equation = `y = ${formatEquationNumber(shownA)} · x² ${bSign} ${formatEquationNumber(Math.abs(shownB))} · x ${cSign} ${formatEquationNumber(Math.abs(shownC))}`;
           showFitResult(
             "Ajuste cuadrático",
             equation,
