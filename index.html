@@ -1,0 +1,1459 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vista previa · Gráficas XY</title>
+<style>body{margin:0;padding:12px;background:#f2f6f7}</style>
+</head>
+<body>
+<!--
+  GRÁFICAS XY PARA Física · versión para Blogger/Blogspot
+  Pegue este bloque completo en un gadget HTML/JavaScript.
+  No requiere bibliotecas externas ni envía datos a servidores.
+-->
+<div id="pxy-widget" class="pxy-widget">
+  <style>
+    #pxy-widget,
+    #pxy-widget * {
+      box-sizing: border-box;
+    }
+
+    #pxy-widget {
+      --pxy-ink: #18313b;
+      --pxy-muted: #5f737b;
+      --pxy-border: #cbd9dd;
+      --pxy-soft: #eef5f6;
+      --pxy-panel: #ffffff;
+      --pxy-accent: #166b72;
+      --pxy-accent-dark: #0f5359;
+      --pxy-danger: #a43838;
+      --pxy-focus: rgba(22, 107, 114, 0.24);
+      width: 100%;
+      max-width: 980px;
+      margin: 18px auto;
+      color: var(--pxy-ink);
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 16px;
+      line-height: 1.45;
+    }
+
+    #pxy-widget .pxy-shell {
+      overflow: hidden;
+      border: 1px solid var(--pxy-border);
+      border-radius: 20px;
+      background: var(--pxy-panel);
+      box-shadow: 0 14px 36px rgba(24, 49, 59, 0.12);
+    }
+
+    #pxy-widget .pxy-header {
+      padding: clamp(22px, 5vw, 38px);
+      background:
+        radial-gradient(circle at 92% 12%, rgba(255, 255, 255, 0.22), transparent 28%),
+        linear-gradient(135deg, #0f5960, #1b7c83);
+      color: #fff;
+    }
+
+    #pxy-widget .pxy-kicker {
+      margin: 0 0 4px;
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      opacity: 0.84;
+    }
+
+    #pxy-widget h2 {
+      margin: 0;
+      color: inherit;
+      font-size: clamp(1.7rem, 5vw, 2.55rem);
+      line-height: 1.1;
+    }
+
+    #pxy-widget .pxy-subtitle {
+      max-width: 720px;
+      margin: 12px 0 0;
+      font-size: clamp(0.96rem, 2.5vw, 1.08rem);
+      opacity: 0.94;
+    }
+
+    #pxy-widget .pxy-main {
+      display: grid;
+      gap: 22px;
+      padding: clamp(16px, 4vw, 30px);
+    }
+
+    #pxy-widget .pxy-card {
+      border: 1px solid var(--pxy-border);
+      border-radius: 16px;
+      background: #fff;
+      padding: clamp(14px, 3vw, 22px);
+    }
+
+    #pxy-widget .pxy-card-title {
+      margin: 0 0 14px;
+      font-size: 1.1rem;
+      font-weight: 800;
+    }
+
+    #pxy-widget .pxy-label-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    #pxy-widget label {
+      display: block;
+      font-weight: 750;
+    }
+
+    #pxy-widget .pxy-help {
+      display: block;
+      margin-top: 4px;
+      color: var(--pxy-muted);
+      font-size: 0.82rem;
+      font-weight: 500;
+    }
+
+    #pxy-widget input,
+    #pxy-widget textarea,
+    #pxy-widget button {
+      font: inherit;
+    }
+
+    #pxy-widget input[type="text"],
+    #pxy-widget textarea {
+      width: 100%;
+      min-height: 46px;
+      margin-top: 6px;
+      border: 1px solid #adbec4;
+      border-radius: 11px;
+      background: #fff;
+      color: var(--pxy-ink);
+      padding: 10px 12px;
+      outline: none;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    #pxy-widget input[type="text"]:focus,
+    #pxy-widget textarea:focus {
+      border-color: var(--pxy-accent);
+      box-shadow: 0 0 0 4px var(--pxy-focus);
+    }
+
+    #pxy-widget .pxy-table-head,
+    #pxy-widget .pxy-data-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 44px;
+      gap: 8px;
+      align-items: center;
+    }
+
+    #pxy-widget .pxy-table-head {
+      padding: 0 4px 6px;
+      color: var(--pxy-muted);
+      font-size: 0.82rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    #pxy-widget .pxy-data-rows {
+      display: grid;
+      gap: 8px;
+    }
+
+    #pxy-widget .pxy-data-row input {
+      margin: 0;
+      min-height: 48px;
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+    }
+
+    #pxy-widget button {
+      min-height: 46px;
+      border: 0;
+      border-radius: 11px;
+      cursor: pointer;
+      font-weight: 800;
+      line-height: 1.15;
+      padding: 11px 15px;
+      transition: transform 0.12s ease, background 0.15s ease, opacity 0.15s ease;
+      touch-action: manipulation;
+    }
+
+    #pxy-widget button:hover {
+      transform: translateY(-1px);
+    }
+
+    #pxy-widget button:focus-visible {
+      outline: 3px solid var(--pxy-focus);
+      outline-offset: 2px;
+    }
+
+    #pxy-widget button:disabled {
+      cursor: not-allowed;
+      opacity: 0.48;
+      transform: none;
+    }
+
+    #pxy-widget .pxy-primary {
+      background: var(--pxy-accent);
+      color: #fff;
+    }
+
+    #pxy-widget .pxy-primary:hover {
+      background: var(--pxy-accent-dark);
+    }
+
+    #pxy-widget .pxy-secondary {
+      border: 1px solid var(--pxy-border);
+      background: var(--pxy-soft);
+      color: var(--pxy-ink);
+    }
+
+    #pxy-widget .pxy-ghost {
+      border: 1px solid var(--pxy-border);
+      background: #fff;
+      color: var(--pxy-ink);
+    }
+
+    #pxy-widget .pxy-remove {
+      min-width: 44px;
+      min-height: 44px;
+      padding: 0;
+      border: 1px solid #e4c1c1;
+      background: #fff6f6;
+      color: var(--pxy-danger);
+      font-size: 1.25rem;
+    }
+
+    #pxy-widget .pxy-row-actions,
+    #pxy-widget .pxy-main-actions,
+    #pxy-widget .pxy-fit-actions,
+    #pxy-widget .pxy-download-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 9px;
+      margin-top: 14px;
+    }
+
+    #pxy-widget .pxy-main-actions .pxy-primary {
+      flex: 1 1 220px;
+    }
+
+    #pxy-widget details {
+      margin-top: 16px;
+      border-top: 1px solid var(--pxy-border);
+      padding-top: 14px;
+    }
+
+    #pxy-widget summary {
+      cursor: pointer;
+      color: var(--pxy-accent-dark);
+      font-weight: 800;
+    }
+
+    #pxy-widget textarea {
+      min-height: 120px;
+      resize: vertical;
+      font-family: "JetBrains Mono", Consolas, monospace;
+      font-size: 0.92rem;
+    }
+
+    #pxy-widget .pxy-checkline {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      margin-top: 14px;
+      font-weight: 650;
+    }
+
+    #pxy-widget .pxy-checkline input {
+      width: 20px;
+      height: 20px;
+      accent-color: var(--pxy-accent);
+    }
+
+    #pxy-widget .pxy-message {
+      display: none;
+      margin-top: 14px;
+      border-radius: 11px;
+      padding: 11px 13px;
+      font-weight: 650;
+    }
+
+    #pxy-widget .pxy-message.is-visible {
+      display: block;
+    }
+
+    #pxy-widget .pxy-message.is-error {
+      border: 1px solid #e4b8b8;
+      background: #fff2f2;
+      color: #7d2525;
+    }
+
+    #pxy-widget .pxy-message.is-success {
+      border: 1px solid #b9d8cc;
+      background: #effaf5;
+      color: #205d48;
+    }
+
+    #pxy-widget .pxy-chart-card {
+      padding: 12px;
+    }
+
+    #pxy-widget .pxy-canvas-wrap {
+      position: relative;
+      width: 100%;
+      min-height: 330px;
+      overflow: hidden;
+      border-radius: 13px;
+      background: #fff;
+    }
+
+    #pxy-widget canvas {
+      display: block;
+      width: 100%;
+      height: 430px;
+      background: #fff;
+    }
+
+    #pxy-widget .pxy-fit-actions button {
+      flex: 1 1 145px;
+    }
+
+    #pxy-widget .pxy-results {
+      display: none;
+      margin-top: 16px;
+      border: 1px solid var(--pxy-border);
+      border-radius: 14px;
+      background: var(--pxy-soft);
+      padding: 15px;
+    }
+
+    #pxy-widget .pxy-results.is-visible {
+      display: block;
+    }
+
+    #pxy-widget .pxy-equation {
+      overflow-wrap: anywhere;
+      margin: 0 0 12px;
+      color: #123f44;
+      font-family: "JetBrains Mono", Consolas, monospace;
+      font-size: clamp(0.9rem, 3vw, 1.08rem);
+      font-weight: 800;
+      line-height: 1.7;
+    }
+
+    #pxy-widget .pxy-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 9px;
+    }
+
+    #pxy-widget .pxy-stat {
+      border: 1px solid rgba(24, 49, 59, 0.12);
+      border-radius: 10px;
+      background: #fff;
+      padding: 10px 11px;
+    }
+
+    #pxy-widget .pxy-stat-name {
+      display: block;
+      color: var(--pxy-muted);
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    #pxy-widget .pxy-stat-value {
+      display: block;
+      margin-top: 3px;
+      font-variant-numeric: tabular-nums;
+      font-weight: 800;
+    }
+
+    #pxy-widget .pxy-note {
+      margin: 11px 0 0;
+      color: var(--pxy-muted);
+      font-size: 0.86rem;
+    }
+
+    #pxy-widget .pxy-data-preview {
+      display: none;
+      margin-top: 16px;
+      overflow-x: auto;
+      border: 1px solid var(--pxy-border);
+      border-radius: 12px;
+    }
+
+    #pxy-widget .pxy-data-preview.is-visible {
+      display: block;
+    }
+
+    #pxy-widget table {
+      width: 100%;
+      border-collapse: collapse;
+      font-variant-numeric: tabular-nums;
+    }
+
+    #pxy-widget th,
+    #pxy-widget td {
+      border-bottom: 1px solid var(--pxy-border);
+      padding: 9px 12px;
+      text-align: center;
+    }
+
+    #pxy-widget th {
+      background: var(--pxy-soft);
+      font-size: 0.86rem;
+    }
+
+    #pxy-widget tr:last-child td {
+      border-bottom: 0;
+    }
+
+    #pxy-widget .pxy-footer {
+      padding: 14px 20px 20px;
+      color: var(--pxy-muted);
+      font-size: 0.8rem;
+      text-align: center;
+    }
+
+    @media (max-width: 640px) {
+      #pxy-widget {
+        margin: 10px auto;
+        font-size: 15px;
+      }
+
+      #pxy-widget .pxy-shell {
+        border-radius: 14px;
+      }
+
+      #pxy-widget .pxy-label-grid {
+        grid-template-columns: 1fr;
+      }
+
+      #pxy-widget .pxy-main {
+        gap: 14px;
+        padding: 12px;
+      }
+
+      #pxy-widget .pxy-card {
+        border-radius: 13px;
+        padding: 13px;
+      }
+
+      #pxy-widget canvas {
+        height: 330px;
+      }
+
+      #pxy-widget .pxy-fit-actions,
+      #pxy-widget .pxy-download-actions {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      #pxy-widget .pxy-fit-actions button,
+      #pxy-widget .pxy-download-actions button {
+        width: 100%;
+        min-width: 0;
+        padding-inline: 8px;
+      }
+
+      #pxy-widget .pxy-main-actions {
+        display: grid;
+        grid-template-columns: 1fr;
+      }
+
+      #pxy-widget .pxy-main-actions .pxy-primary {
+        width: 100%;
+      }
+    }
+
+    @media (max-width: 380px) {
+      #pxy-widget .pxy-fit-actions,
+      #pxy-widget .pxy-download-actions {
+        grid-template-columns: 1fr;
+      }
+
+      #pxy-widget .pxy-table-head,
+      #pxy-widget .pxy-data-row {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 42px;
+        gap: 6px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      #pxy-widget *,
+      #pxy-widget *::before,
+      #pxy-widget *::after {
+        scroll-behavior: auto !important;
+        transition: none !important;
+      }
+    }
+  </style>
+
+  <div class="pxy-shell">
+    <header class="pxy-header">
+      <p class="pxy-kicker">Curso de Física</p>
+      <h2>Gráficas XY</h2>
+      <p class="pxy-subtitle">
+        Ingrese datos positivos o negativos, represéntelos y calcule ajustes lineales,
+        cuadráticos o exponenciales con incertidumbres estadísticas.
+      </p>
+    </header>
+
+    <main class="pxy-main">
+      <section class="pxy-card" aria-labelledby="pxy-input-title">
+        <h3 id="pxy-input-title" class="pxy-card-title">1. Datos y ejes</h3>
+
+        <div class="pxy-label-grid">
+          <label>
+            Etiqueta del eje X
+            <input id="pxy-label-x" type="text" value="x" maxlength="80" autocomplete="off">
+            <span class="pxy-help">Ejemplo: Tiempo (s)</span>
+          </label>
+          <label>
+            Etiqueta del eje Y
+            <input id="pxy-label-y" type="text" value="y" maxlength="80" autocomplete="off">
+            <span class="pxy-help">Ejemplo: Posición (m)</span>
+          </label>
+        </div>
+
+        <div class="pxy-table-head" aria-hidden="true">
+          <span>Valor X</span>
+          <span>Valor Y</span>
+          <span></span>
+        </div>
+        <div id="pxy-data-rows" class="pxy-data-rows"></div>
+
+        <div class="pxy-row-actions">
+          <button id="pxy-add-row" class="pxy-secondary" type="button">+ Agregar fila</button>
+          <button id="pxy-clear-rows" class="pxy-ghost" type="button">Vaciar datos</button>
+        </div>
+
+        <details>
+          <summary>Pegar varios pares de datos</summary>
+          <p class="pxy-note">
+            Escriba un par por línea. Separe X e Y con tabulación, punto y coma o espacios.
+            Se admite coma decimal, por ejemplo: <strong>-1,5&nbsp;&nbsp;3,2</strong>.
+          </p>
+          <textarea id="pxy-paste-data" spellcheck="false" placeholder="-2,0   4,1&#10;-1,0   1,2&#10;0,0    0,1"></textarea>
+          <button id="pxy-load-pasted" class="pxy-secondary" type="button">Cargar datos pegados</button>
+        </details>
+
+        <label class="pxy-checkline">
+          <input id="pxy-include-zero" type="checkbox" checked>
+          Incluir el cero en ambas escalas
+        </label>
+
+        <div class="pxy-main-actions">
+          <button id="pxy-plot" class="pxy-primary" type="button">Confirmar y graficar</button>
+          <button id="pxy-reset" class="pxy-ghost" type="button">Reiniciar</button>
+        </div>
+
+        <div id="pxy-message" class="pxy-message" role="status" aria-live="polite"></div>
+      </section>
+
+      <section class="pxy-card pxy-chart-card" aria-labelledby="pxy-chart-title">
+        <h3 id="pxy-chart-title" class="pxy-card-title">2. Gráfico y ajustes</h3>
+        <div id="pxy-canvas-wrap" class="pxy-canvas-wrap">
+          <canvas id="pxy-canvas" aria-label="Gráfico de dispersión XY"></canvas>
+        </div>
+
+        <div class="pxy-fit-actions" aria-label="Tipos de ajuste">
+          <button id="pxy-fit-linear" class="pxy-secondary" type="button" disabled>Lineal</button>
+          <button id="pxy-fit-quadratic" class="pxy-secondary" type="button" disabled>Cuadrático</button>
+          <button id="pxy-fit-exponential" class="pxy-secondary" type="button" disabled>Exponencial</button>
+        </div>
+
+        <div id="pxy-results" class="pxy-results" aria-live="polite">
+          <p id="pxy-equation" class="pxy-equation"></p>
+          <div id="pxy-stats" class="pxy-stats-grid"></div>
+          <p id="pxy-fit-note" class="pxy-note"></p>
+        </div>
+
+        <div id="pxy-data-preview" class="pxy-data-preview"></div>
+
+        <div class="pxy-download-actions">
+          <button id="pxy-download-data" class="pxy-ghost" type="button" disabled>Descargar datos</button>
+          <button id="pxy-download-png" class="pxy-ghost" type="button" disabled>Descargar gráfico</button>
+        </div>
+      </section>
+    </main>
+
+    <footer class="pxy-footer">
+      Versión adaptada para Blogger a partir de la herramienta Plots XY de Pablo Vaz.
+      Los cálculos se realizan localmente en el navegador.
+    </footer>
+  </div>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const root = document.getElementById("pxy-widget");
+      if (!root || root.dataset.initialized === "true") return;
+      root.dataset.initialized = "true";
+
+      const el = {
+        labelX: root.querySelector("#pxy-label-x"),
+        labelY: root.querySelector("#pxy-label-y"),
+        rows: root.querySelector("#pxy-data-rows"),
+        addRow: root.querySelector("#pxy-add-row"),
+        clearRows: root.querySelector("#pxy-clear-rows"),
+        pasteData: root.querySelector("#pxy-paste-data"),
+        loadPasted: root.querySelector("#pxy-load-pasted"),
+        includeZero: root.querySelector("#pxy-include-zero"),
+        plot: root.querySelector("#pxy-plot"),
+        reset: root.querySelector("#pxy-reset"),
+        message: root.querySelector("#pxy-message"),
+        canvasWrap: root.querySelector("#pxy-canvas-wrap"),
+        canvas: root.querySelector("#pxy-canvas"),
+        fitLinear: root.querySelector("#pxy-fit-linear"),
+        fitQuadratic: root.querySelector("#pxy-fit-quadratic"),
+        fitExponential: root.querySelector("#pxy-fit-exponential"),
+        results: root.querySelector("#pxy-results"),
+        equation: root.querySelector("#pxy-equation"),
+        stats: root.querySelector("#pxy-stats"),
+        fitNote: root.querySelector("#pxy-fit-note"),
+        dataPreview: root.querySelector("#pxy-data-preview"),
+        downloadData: root.querySelector("#pxy-download-data"),
+        downloadPng: root.querySelector("#pxy-download-png")
+      };
+
+      const state = {
+        points: [],
+        fit: null,
+        scale: null,
+        labels: { x: "x", y: "y" }
+      };
+
+      function showMessage(text, type = "error") {
+        el.message.textContent = text;
+        el.message.className = `pxy-message is-visible is-${type}`;
+      }
+
+      function clearMessage() {
+        el.message.textContent = "";
+        el.message.className = "pxy-message";
+      }
+
+      function parseLocaleNumber(value) {
+        const normalized = String(value)
+          .trim()
+          .replace(/\s+/g, "")
+          .replace(",", ".");
+        if (normalized === "") return null;
+        const number = Number(normalized);
+        return Number.isFinite(number) ? number : NaN;
+      }
+
+      function formatSmart(value, significantDigits = 6) {
+        if (!Number.isFinite(value)) return "no estimable";
+        if (Object.is(value, -0)) value = 0;
+        if (value === 0) return "0";
+
+        const abs = Math.abs(value);
+        let text;
+        if (abs >= 1e6 || abs < 1e-4) {
+          text = value.toExponential(Math.max(0, significantDigits - 1));
+        } else {
+          text = Number(value.toPrecision(significantDigits)).toString();
+        }
+        return text.replace(".", ",");
+      }
+
+      function formatPair(value, uncertainty) {
+        if (!Number.isFinite(uncertainty)) {
+          return `${formatSmart(value)} ± no estimable`;
+        }
+        return `${formatSmart(value, 6)} ± ${formatSmart(uncertainty, 2)}`;
+      }
+
+      function addDataRow(x = "", y = "") {
+        const row = document.createElement("div");
+        row.className = "pxy-data-row";
+        row.innerHTML = `
+          <input class="pxy-x" type="text" inputmode="decimal" autocomplete="off" aria-label="Valor X" value="${escapeAttribute(x)}">
+          <input class="pxy-y" type="text" inputmode="decimal" autocomplete="off" aria-label="Valor Y" value="${escapeAttribute(y)}">
+          <button class="pxy-remove" type="button" aria-label="Eliminar esta fila" title="Eliminar fila">×</button>
+        `;
+
+        row.querySelector(".pxy-remove").addEventListener("click", () => {
+          row.remove();
+          if (el.rows.children.length === 0) addDataRow();
+        });
+
+        const xInput = row.querySelector(".pxy-x");
+        const yInput = row.querySelector(".pxy-y");
+
+        xInput.addEventListener("keydown", event => {
+          if (event.key === "Enter") {
+            event.preventDefault();
+            yInput.focus();
+          }
+        });
+
+        yInput.addEventListener("keydown", event => {
+          if (event.key === "Enter") {
+            event.preventDefault();
+            addDataRow();
+            el.rows.lastElementChild.querySelector(".pxy-x").focus();
+          }
+        });
+
+        el.rows.appendChild(row);
+      }
+
+      function escapeAttribute(value) {
+        return String(value)
+          .replace(/&/g, "&amp;")
+          .replace(/"/g, "&quot;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;");
+      }
+
+      function readPoints() {
+        const rows = [...el.rows.querySelectorAll(".pxy-data-row")];
+        const points = [];
+
+        for (let index = 0; index < rows.length; index += 1) {
+          const xRaw = rows[index].querySelector(".pxy-x").value;
+          const yRaw = rows[index].querySelector(".pxy-y").value;
+          const x = parseLocaleNumber(xRaw);
+          const y = parseLocaleNumber(yRaw);
+
+          if (x === null && y === null) continue;
+          if (x === null || y === null) {
+            throw new Error(`La fila ${index + 1} está incompleta.`);
+          }
+          if (Number.isNaN(x) || Number.isNaN(y)) {
+            throw new Error(`La fila ${index + 1} contiene un número no válido.`);
+          }
+          points.push({ x, y });
+        }
+
+        if (points.length < 2) {
+          throw new Error("Ingrese al menos dos pares de datos completos.");
+        }
+        return points;
+      }
+
+      function loadPastedData() {
+        const lines = el.pasteData.value
+          .split(/\r?\n/)
+          .map(line => line.trim())
+          .filter(Boolean);
+
+        if (lines.length === 0) {
+          showMessage("No hay datos para cargar.");
+          return;
+        }
+
+        const pairs = [];
+        for (let i = 0; i < lines.length; i += 1) {
+          let parts;
+          if (lines[i].includes("\t")) {
+            parts = lines[i].split(/\t+/);
+          } else if (lines[i].includes(";")) {
+            parts = lines[i].split(/\s*;\s*/);
+          } else {
+            parts = lines[i].split(/\s+/);
+          }
+
+          if (parts.length !== 2) {
+            showMessage(`No pude interpretar la línea ${i + 1}. Use dos valores separados por espacios, tabulación o punto y coma.`);
+            return;
+          }
+
+          const x = parseLocaleNumber(parts[0]);
+          const y = parseLocaleNumber(parts[1]);
+          if (!Number.isFinite(x) || !Number.isFinite(y)) {
+            showMessage(`La línea ${i + 1} contiene un número no válido.`);
+            return;
+          }
+          pairs.push([parts[0], parts[1]]);
+        }
+
+        el.rows.innerHTML = "";
+        pairs.forEach(([x, y]) => addDataRow(x, y));
+        clearMessage();
+        showMessage(`Se cargaron ${pairs.length} pares de datos.`, "success");
+      }
+
+      function plotData() {
+        try {
+          state.points = readPoints();
+          state.fit = null;
+          state.labels.x = el.labelX.value.trim() || "x";
+          state.labels.y = el.labelY.value.trim() || "y";
+          updateButtons();
+          renderDataPreview();
+          hideResults();
+          draw();
+          clearMessage();
+          showMessage(`Se graficaron ${state.points.length} puntos.`, "success");
+        } catch (error) {
+          showMessage(error.message);
+        }
+      }
+
+      function updateButtons() {
+        const n = state.points.length;
+        const enabled = n >= 2;
+        el.fitLinear.disabled = !enabled;
+        el.fitQuadratic.disabled = n < 3;
+        el.fitExponential.disabled = !enabled;
+        el.downloadData.disabled = !enabled;
+        el.downloadPng.disabled = !enabled;
+      }
+
+      function renderDataPreview() {
+        const headX = escapeHtml(state.labels.x);
+        const headY = escapeHtml(state.labels.y);
+        const body = state.points
+          .map(point => `<tr><td>${formatSmart(point.x, 8)}</td><td>${formatSmart(point.y, 8)}</td></tr>`)
+          .join("");
+        el.dataPreview.innerHTML = `<table><thead><tr><th>${headX}</th><th>${headY}</th></tr></thead><tbody>${body}</tbody></table>`;
+        el.dataPreview.classList.add("is-visible");
+      }
+
+      function escapeHtml(value) {
+        return String(value)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
+      }
+
+      function transpose(matrix) {
+        return matrix[0].map((_, column) => matrix.map(row => row[column]));
+      }
+
+      function multiplyMatrices(a, b) {
+        const rows = a.length;
+        const columns = b[0].length;
+        const shared = b.length;
+        const result = Array.from({ length: rows }, () => Array(columns).fill(0));
+
+        for (let i = 0; i < rows; i += 1) {
+          for (let k = 0; k < shared; k += 1) {
+            for (let j = 0; j < columns; j += 1) {
+              result[i][j] += a[i][k] * b[k][j];
+            }
+          }
+        }
+        return result;
+      }
+
+      function invertMatrix(matrix) {
+        const n = matrix.length;
+        const augmented = matrix.map((row, i) => [
+          ...row.map(Number),
+          ...Array.from({ length: n }, (_, j) => (i === j ? 1 : 0))
+        ]);
+
+        for (let column = 0; column < n; column += 1) {
+          let pivotRow = column;
+          for (let row = column + 1; row < n; row += 1) {
+            if (Math.abs(augmented[row][column]) > Math.abs(augmented[pivotRow][column])) {
+              pivotRow = row;
+            }
+          }
+
+          const pivot = augmented[pivotRow][column];
+          if (!Number.isFinite(pivot) || Math.abs(pivot) < 1e-12) {
+            return null;
+          }
+
+          [augmented[column], augmented[pivotRow]] = [augmented[pivotRow], augmented[column]];
+
+          const pivotValue = augmented[column][column];
+          for (let j = 0; j < 2 * n; j += 1) {
+            augmented[column][j] /= pivotValue;
+          }
+
+          for (let row = 0; row < n; row += 1) {
+            if (row === column) continue;
+            const factor = augmented[row][column];
+            for (let j = 0; j < 2 * n; j += 1) {
+              augmented[row][j] -= factor * augmented[column][j];
+            }
+          }
+        }
+
+        return augmented.map(row => row.slice(n));
+      }
+
+      function fitOLS(design, observed) {
+        const n = observed.length;
+        const p = design[0].length;
+        const xt = transpose(design);
+        const xtx = multiplyMatrices(xt, design);
+        const inverse = invertMatrix(xtx);
+        if (!inverse) {
+          throw new Error("El ajuste no puede calcularse porque los datos producen un sistema singular. Revise que haya suficientes valores diferentes de X.");
+        }
+
+        const yColumn = observed.map(value => [value]);
+        const xty = multiplyMatrices(xt, yColumn);
+        const beta = multiplyMatrices(inverse, xty).map(row => row[0]);
+        const predicted = design.map(row => row.reduce((sum, value, i) => sum + value * beta[i], 0));
+        const residuals = observed.map((value, i) => value - predicted[i]);
+        const sse = residuals.reduce((sum, value) => sum + value * value, 0);
+        const mean = observed.reduce((sum, value) => sum + value, 0) / n;
+        const sst = observed.reduce((sum, value) => sum + (value - mean) ** 2, 0);
+        const df = n - p;
+        const sigma2 = df > 0 ? sse / df : null;
+        const standardErrors = sigma2 === null
+          ? Array(p).fill(NaN)
+          : inverse.map((row, i) => Math.sqrt(Math.max(0, sigma2 * row[i])));
+        const r2 = sst > 1e-20 ? 1 - sse / sst : (sse < 1e-20 ? 1 : NaN);
+
+        return {
+          beta,
+          standardErrors,
+          predicted,
+          residuals,
+          sse,
+          df,
+          r2,
+          residualStd: sigma2 === null ? NaN : Math.sqrt(sigma2)
+        };
+      }
+
+      function fitLinear() {
+        try {
+          const x = state.points.map(point => point.x);
+          const y = state.points.map(point => point.y);
+          const design = x.map(value => [1, value]);
+          const ols = fitOLS(design, y);
+          const [intercept, slope] = ols.beta;
+          const [uIntercept, uSlope] = ols.standardErrors;
+
+          state.fit = {
+            type: "linear",
+            predict: value => intercept + slope * value,
+            coefficients: { intercept, slope, uIntercept, uSlope },
+            stats: ols
+          };
+
+          const sign = intercept < 0 ? "−" : "+";
+          const equation = `y = (${formatPair(slope, uSlope)}) · x ${sign} (${formatPair(Math.abs(intercept), uIntercept)})`;
+          showFitResult(
+            "Ajuste lineal",
+            equation,
+            [
+              ["Pendiente m", formatPair(slope, uSlope)],
+              ["Ordenada b", formatPair(intercept, uIntercept)],
+              ["R²", formatSmart(ols.r2, 6)],
+              ["Error residual s", formatSmart(ols.residualStd, 4)],
+              ["Datos n", String(state.points.length)],
+              ["Grados de libertad", String(ols.df)]
+            ],
+            ols.df > 0
+              ? "Incertidumbres: errores estándar de 1σ, estimados a partir de los residuos del ajuste."
+              : "Con dos puntos la recta queda determinada exactamente, pero no hay grados de libertad para estimar las incertidumbres."
+          );
+          draw();
+        } catch (error) {
+          showMessage(error.message);
+        }
+      }
+
+      function fitQuadratic() {
+        try {
+          const x = state.points.map(point => point.x);
+          const y = state.points.map(point => point.y);
+          const design = x.map(value => [1, value, value * value]);
+          const ols = fitOLS(design, y);
+          const [c, b, a] = ols.beta;
+          const [uC, uB, uA] = ols.standardErrors;
+
+          state.fit = {
+            type: "quadratic",
+            predict: value => a * value * value + b * value + c,
+            coefficients: { a, b, c, uA, uB, uC },
+            stats: ols
+          };
+
+          const bSign = b < 0 ? "−" : "+";
+          const cSign = c < 0 ? "−" : "+";
+          const equation = `y = (${formatPair(a, uA)}) · x² ${bSign} (${formatPair(Math.abs(b), uB)}) · x ${cSign} (${formatPair(Math.abs(c), uC)})`;
+          showFitResult(
+            "Ajuste cuadrático",
+            equation,
+            [
+              ["Coeficiente a", formatPair(a, uA)],
+              ["Coeficiente b", formatPair(b, uB)],
+              ["Coeficiente c", formatPair(c, uC)],
+              ["R²", formatSmart(ols.r2, 6)],
+              ["Error residual s", formatSmart(ols.residualStd, 4)],
+              ["Grados de libertad", String(ols.df)]
+            ],
+            ols.df > 0
+              ? "Incertidumbres: errores estándar de 1σ de los coeficientes del polinomio."
+              : "Con tres puntos el polinomio puede quedar determinado exactamente, pero no hay grados de libertad para estimar las incertidumbres."
+          );
+          draw();
+        } catch (error) {
+          showMessage(error.message);
+        }
+      }
+
+      function fitExponential() {
+        try {
+          const invalid = state.points.find(point => point.y <= 0);
+          if (invalid) {
+            throw new Error("El ajuste exponencial requiere que todas las ordenadas sean positivas, porque utiliza ln(y). Las abscisas sí pueden ser negativas.");
+          }
+
+          const x = state.points.map(point => point.x);
+          const y = state.points.map(point => point.y);
+          const logY = y.map(Math.log);
+          const design = x.map(value => [1, value]);
+          const ols = fitOLS(design, logY);
+          const [alpha, k] = ols.beta;
+          const [uAlpha, uK] = ols.standardErrors;
+          const A = Math.exp(alpha);
+          const uA = Number.isFinite(uAlpha) ? A * uAlpha : NaN;
+          const predictedY = x.map(value => A * Math.exp(k * value));
+          const meanY = y.reduce((sum, value) => sum + value, 0) / y.length;
+          const sseY = y.reduce((sum, value, i) => sum + (value - predictedY[i]) ** 2, 0);
+          const sstY = y.reduce((sum, value) => sum + (value - meanY) ** 2, 0);
+          const r2Original = sstY > 1e-20 ? 1 - sseY / sstY : (sseY < 1e-20 ? 1 : NaN);
+
+          state.fit = {
+            type: "exponential",
+            predict: value => A * Math.exp(k * value),
+            coefficients: { A, k, uA, uK },
+            stats: { ...ols, r2Original }
+          };
+
+          const equation = `y = (${formatPair(A, uA)}) · e<sup>[(${formatPair(k, uK)}) · x]</sup>`;
+          showFitResult(
+            "Ajuste exponencial",
+            equation,
+            [
+              ["Amplitud A", formatPair(A, uA)],
+              ["Constante k", formatPair(k, uK)],
+              ["R² en y", formatSmart(r2Original, 6)],
+              ["R² en ln(y)", formatSmart(ols.r2, 6)],
+              ["Error residual en ln(y)", formatSmart(ols.residualStd, 4)],
+              ["Grados de libertad", String(ols.df)]
+            ],
+            ols.df > 0
+              ? "El ajuste se realiza por regresión lineal de ln(y) respecto de x. Las incertidumbres son errores estándar de 1σ; u(A) se obtiene por propagación desde ln(A)."
+              : "Con dos puntos no hay grados de libertad para estimar las incertidumbres del ajuste exponencial."
+          );
+          draw();
+        } catch (error) {
+          showMessage(error.message);
+        }
+      }
+
+      function showFitResult(title, equation, stats, note) {
+        clearMessage();
+        showMessage(`${title} calculado correctamente.`, "success");
+        el.equation.innerHTML = equation;
+        el.stats.innerHTML = stats.map(([name, value]) => `
+          <div class="pxy-stat">
+            <span class="pxy-stat-name">${escapeHtml(name)}</span>
+            <span class="pxy-stat-value">${escapeHtml(value)}</span>
+          </div>
+        `).join("");
+        el.fitNote.textContent = note;
+        el.results.classList.add("is-visible");
+      }
+
+      function hideResults() {
+        el.results.classList.remove("is-visible");
+        el.equation.textContent = "";
+        el.stats.innerHTML = "";
+        el.fitNote.textContent = "";
+      }
+
+      function niceNumber(range, round) {
+        if (!Number.isFinite(range) || range <= 0) return 1;
+        const exponent = Math.floor(Math.log10(range));
+        const fraction = range / 10 ** exponent;
+        let niceFraction;
+
+        if (round) {
+          if (fraction < 1.5) niceFraction = 1;
+          else if (fraction < 3) niceFraction = 2;
+          else if (fraction < 7) niceFraction = 5;
+          else niceFraction = 10;
+        } else {
+          if (fraction <= 1) niceFraction = 1;
+          else if (fraction <= 2) niceFraction = 2;
+          else if (fraction <= 5) niceFraction = 5;
+          else niceFraction = 10;
+        }
+        return niceFraction * 10 ** exponent;
+      }
+
+      function createScale(values, includeZero, maxTicks = 7) {
+        let min = Math.min(...values);
+        let max = Math.max(...values);
+
+        if (includeZero) {
+          min = Math.min(min, 0);
+          max = Math.max(max, 0);
+        }
+
+        if (min === max) {
+          const delta = Math.abs(min) > 0 ? Math.abs(min) * 0.1 : 1;
+          min -= delta;
+          max += delta;
+        }
+
+        const padding = (max - min) * 0.06;
+        min -= padding;
+        max += padding;
+
+        const range = niceNumber(max - min, false);
+        const step = niceNumber(range / Math.max(2, maxTicks - 1), true);
+        const niceMin = Math.floor(min / step) * step;
+        const niceMax = Math.ceil(max / step) * step;
+        return { min: niceMin, max: niceMax, step };
+      }
+
+      function setupCanvas() {
+        const rect = el.canvas.getBoundingClientRect();
+        const cssWidth = Math.max(280, rect.width || el.canvasWrap.clientWidth || 600);
+        const cssHeight = window.matchMedia("(max-width: 640px)").matches ? 330 : 430;
+        const dpr = Math.min(window.devicePixelRatio || 1, 2.5);
+
+        el.canvas.style.height = `${cssHeight}px`;
+        el.canvas.width = Math.round(cssWidth * dpr);
+        el.canvas.height = Math.round(cssHeight * dpr);
+
+        const ctx = el.canvas.getContext("2d");
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        return { ctx, width: cssWidth, height: cssHeight };
+      }
+
+      function drawEmpty(ctx, width, height) {
+        ctx.clearRect(0, 0, width, height);
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, width, height);
+        ctx.fillStyle = "#6b7d84";
+        ctx.font = "600 15px system-ui, sans-serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("Ingrese datos y pulse “Confirmar y graficar”.", width / 2, height / 2);
+      }
+
+      function draw() {
+        const { ctx, width, height } = setupCanvas();
+        if (state.points.length === 0) {
+          drawEmpty(ctx, width, height);
+          return;
+        }
+
+        const mobile = width < 520;
+        const margin = {
+          left: mobile ? 55 : 70,
+          right: 18,
+          top: 22,
+          bottom: mobile ? 62 : 68
+        };
+        const plotWidth = Math.max(80, width - margin.left - margin.right);
+        const plotHeight = Math.max(80, height - margin.top - margin.bottom);
+        const includeZero = el.includeZero.checked;
+
+        const xValues = state.points.map(point => point.x);
+        const yValues = state.points.map(point => point.y);
+
+        const provisionalX = createScale(xValues, includeZero, mobile ? 5 : 7);
+        if (state.fit) {
+          const samples = 120;
+          for (let i = 0; i <= samples; i += 1) {
+            const x = provisionalX.min + (provisionalX.max - provisionalX.min) * i / samples;
+            const y = state.fit.predict(x);
+            if (Number.isFinite(y)) yValues.push(y);
+          }
+        }
+
+        const xScale = createScale(xValues, includeZero, mobile ? 5 : 7);
+        const yScale = createScale(yValues, includeZero, mobile ? 5 : 7);
+        state.scale = { x: xScale, y: yScale };
+
+        const mapX = value => margin.left + (value - xScale.min) / (xScale.max - xScale.min) * plotWidth;
+        const mapY = value => margin.top + (yScale.max - value) / (yScale.max - yScale.min) * plotHeight;
+
+        ctx.clearRect(0, 0, width, height);
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, width, height);
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(margin.left, margin.top, plotWidth, plotHeight);
+        ctx.clip();
+
+        drawGrid(ctx, xScale, yScale, mapX, mapY, margin, plotWidth, plotHeight);
+        drawAxes(ctx, xScale, yScale, mapX, mapY, margin, plotWidth, plotHeight);
+
+        if (state.fit) {
+          drawFitCurve(ctx, state.fit, xScale, yScale, mapX, mapY);
+        }
+
+        drawPoints(ctx, state.points, mapX, mapY, mobile);
+        ctx.restore();
+
+        drawTickLabels(ctx, xScale, yScale, mapX, mapY, margin, plotWidth, plotHeight, mobile);
+        drawAxisLabels(ctx, width, height, margin, state.labels, mobile);
+      }
+
+      function drawGrid(ctx, xScale, yScale, mapX, mapY, margin, plotWidth, plotHeight) {
+        ctx.save();
+        ctx.strokeStyle = "#dce6e9";
+        ctx.lineWidth = 1;
+
+        forEachTick(xScale, value => {
+          const x = mapX(value);
+          ctx.beginPath();
+          ctx.moveTo(x, margin.top);
+          ctx.lineTo(x, margin.top + plotHeight);
+          ctx.stroke();
+        });
+
+        forEachTick(yScale, value => {
+          const y = mapY(value);
+          ctx.beginPath();
+          ctx.moveTo(margin.left, y);
+          ctx.lineTo(margin.left + plotWidth, y);
+          ctx.stroke();
+        });
+        ctx.restore();
+      }
+
+      function drawAxes(ctx, xScale, yScale, mapX, mapY, margin, plotWidth, plotHeight) {
+        const xAxisY = yScale.min <= 0 && yScale.max >= 0 ? mapY(0) : margin.top + plotHeight;
+        const yAxisX = xScale.min <= 0 && xScale.max >= 0 ? mapX(0) : margin.left;
+
+        ctx.save();
+        ctx.strokeStyle = "#243e48";
+        ctx.lineWidth = 1.8;
+        ctx.beginPath();
+        ctx.moveTo(margin.left, xAxisY);
+        ctx.lineTo(margin.left + plotWidth, xAxisY);
+        ctx.moveTo(yAxisX, margin.top);
+        ctx.lineTo(yAxisX, margin.top + plotHeight);
+        ctx.stroke();
+
+        ctx.strokeStyle = "#8ca0a7";
+        ctx.lineWidth = 1;
+        ctx.strokeRect(margin.left, margin.top, plotWidth, plotHeight);
+        ctx.restore();
+      }
+
+      function drawPoints(ctx, points, mapX, mapY, mobile) {
+        const radius = mobile ? 4 : 4.5;
+        ctx.save();
+        for (const point of points) {
+          const x = mapX(point.x);
+          const y = mapY(point.y);
+          ctx.beginPath();
+          ctx.arc(x, y, radius, 0, Math.PI * 2);
+          ctx.fillStyle = "#c4473f";
+          ctx.fill();
+          ctx.lineWidth = 1.3;
+          ctx.strokeStyle = "#7b231f";
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
+
+      function drawFitCurve(ctx, fit, xScale, yScale, mapX, mapY) {
+        const samples = 260;
+        let started = false;
+        ctx.save();
+        ctx.beginPath();
+
+        for (let i = 0; i <= samples; i += 1) {
+          const x = xScale.min + (xScale.max - xScale.min) * i / samples;
+          const y = fit.predict(x);
+          if (!Number.isFinite(y) || y < yScale.min - 10 * (yScale.max - yScale.min) || y > yScale.max + 10 * (yScale.max - yScale.min)) {
+            started = false;
+            continue;
+          }
+
+          const px = mapX(x);
+          const py = mapY(y);
+          if (!started) {
+            ctx.moveTo(px, py);
+            started = true;
+          } else {
+            ctx.lineTo(px, py);
+          }
+        }
+
+        ctx.strokeStyle = "#176f9b";
+        ctx.lineWidth = 2.6;
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      function forEachTick(scale, callback) {
+        const estimatedCount = Math.round((scale.max - scale.min) / scale.step);
+        const count = Math.min(200, Math.max(0, estimatedCount));
+        for (let i = 0; i <= count; i += 1) {
+          const value = scale.min + i * scale.step;
+          callback(Math.abs(value) < Math.abs(scale.step) * 1e-10 ? 0 : value);
+        }
+      }
+
+      function drawTickLabels(ctx, xScale, yScale, mapX, mapY, margin, plotWidth, plotHeight, mobile) {
+        ctx.save();
+        ctx.fillStyle = "#455d66";
+        ctx.font = `${mobile ? 10 : 11}px system-ui, sans-serif`;
+        ctx.textBaseline = "top";
+        ctx.textAlign = "center";
+
+        forEachTick(xScale, value => {
+          const x = mapX(value);
+          ctx.fillText(formatTick(value, xScale.step), x, margin.top + plotHeight + 8);
+        });
+
+        ctx.textBaseline = "middle";
+        ctx.textAlign = "right";
+        forEachTick(yScale, value => {
+          const y = mapY(value);
+          ctx.fillText(formatTick(value, yScale.step), margin.left - 8, y);
+        });
+        ctx.restore();
+      }
+
+      function formatTick(value, step) {
+        if (value === 0) return "0";
+        const absStep = Math.abs(step);
+        const decimals = absStep >= 1 ? 0 : Math.min(6, Math.max(0, Math.ceil(-Math.log10(absStep)) + 1));
+        const abs = Math.abs(value);
+        let text;
+        if (abs >= 1e5 || abs < 1e-4) {
+          text = value.toExponential(1);
+        } else {
+          text = value.toFixed(decimals);
+          if (decimals > 0) text = text.replace(/0+$/, "").replace(/\.$/, "");
+        }
+        return text.replace(".", ",");
+      }
+
+      function drawAxisLabels(ctx, width, height, margin, labels, mobile) {
+        ctx.save();
+        ctx.fillStyle = "#18313b";
+        ctx.font = `700 ${mobile ? 12 : 13}px system-ui, sans-serif`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "bottom";
+        const xLabel = truncateLabel(labels.x, mobile ? 28 : 48);
+        ctx.fillText(xLabel, margin.left + (width - margin.left - margin.right) / 2, height - 6);
+
+        ctx.save();
+        ctx.translate(14, margin.top + (height - margin.top - margin.bottom) / 2);
+        ctx.rotate(-Math.PI / 2);
+        const yLabel = truncateLabel(labels.y, mobile ? 24 : 42);
+        ctx.fillText(yLabel, 0, 0);
+        ctx.restore();
+        ctx.restore();
+      }
+
+      function truncateLabel(text, maxLength) {
+        const value = String(text);
+        return value.length <= maxLength ? value : `${value.slice(0, maxLength - 1)}…`;
+      }
+
+      function downloadData() {
+        if (state.points.length === 0) return;
+        const lines = [
+          `${state.labels.x}\t${state.labels.y}`,
+          ...state.points.map(point => `${String(point.x).replace(".", ",")}\t${String(point.y).replace(".", ",")}`)
+        ];
+        const blob = new Blob([lines.join("\n")], { type: "text/plain;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        triggerDownload(url, "datos_xy.txt");
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      }
+
+      function downloadPng() {
+        if (state.points.length === 0) return;
+        draw();
+        const url = el.canvas.toDataURL("image/png");
+        triggerDownload(url, "grafica_xy.png");
+      }
+
+      function triggerDownload(url, filename) {
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+      }
+
+      function resetAll() {
+        state.points = [];
+        state.fit = null;
+        state.scale = null;
+        state.labels = { x: "x", y: "y" };
+        el.labelX.value = "x";
+        el.labelY.value = "y";
+        el.includeZero.checked = true;
+        el.pasteData.value = "";
+        el.rows.innerHTML = "";
+        for (let i = 0; i < 4; i += 1) addDataRow();
+        el.dataPreview.innerHTML = "";
+        el.dataPreview.classList.remove("is-visible");
+        hideResults();
+        clearMessage();
+        updateButtons();
+        draw();
+      }
+
+      el.addRow.addEventListener("click", () => {
+        addDataRow();
+        el.rows.lastElementChild.querySelector(".pxy-x").focus();
+      });
+
+      el.clearRows.addEventListener("click", () => {
+        el.rows.innerHTML = "";
+        addDataRow();
+        el.rows.querySelector(".pxy-x").focus();
+      });
+
+      el.loadPasted.addEventListener("click", loadPastedData);
+      el.plot.addEventListener("click", plotData);
+      el.fitLinear.addEventListener("click", fitLinear);
+      el.fitQuadratic.addEventListener("click", fitQuadratic);
+      el.fitExponential.addEventListener("click", fitExponential);
+      el.downloadData.addEventListener("click", downloadData);
+      el.downloadPng.addEventListener("click", downloadPng);
+      el.reset.addEventListener("click", resetAll);
+      el.includeZero.addEventListener("change", draw);
+
+      let resizeTimer = null;
+      const scheduleDraw = () => {
+        window.clearTimeout(resizeTimer);
+        resizeTimer = window.setTimeout(draw, 80);
+      };
+
+      if ("ResizeObserver" in window) {
+        const observer = new ResizeObserver(scheduleDraw);
+        observer.observe(el.canvasWrap);
+      } else {
+        window.addEventListener("resize", scheduleDraw, { passive: true });
+      }
+
+      resetAll();
+    })();
+  </script>
+</div>
+</body>
+</html>
