@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Vista previa · Gráficas XY</title>
+<title>Curso de Física · Gráficas XY</title>
 <style>body{margin:0;padding:12px;background:#f2f6f7}</style>
 </head>
 <body>
 <!--
-  GRÁFICAS XY PARA Física · versión para Blogger/Blogspot
-  Pegue este bloque completo en un gadget HTML/JavaScript.
+  CURSO DE FÍSICA · GRÁFICAS XY
+  Aplicación web autónoma para publicar mediante GitHub Pages e insertar en Blogger.
   No requiere bibliotecas externas ni envía datos a servidores.
 -->
 <div id="pxy-widget" class="pxy-widget">
@@ -58,8 +58,8 @@
       margin: 0 0 4px;
       font-size: 0.78rem;
       font-weight: 800;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      text-transform: none;
       opacity: 0.84;
     }
 
@@ -630,7 +630,8 @@
         points: [],
         fit: null,
         scale: null,
-        labels: { x: "x", y: "y" }
+        labels: { x: "x", y: "y" },
+        minInputSigFigs: 6
       };
 
       function showMessage(text, type = "error") {
@@ -673,6 +674,47 @@
           return `${formatSmart(value)} ± no estimable`;
         }
         return `${formatSmart(value, 6)} ± ${formatSmart(uncertainty, 2)}`;
+      }
+
+      function countSignificantFigures(rawValue) {
+        let text = String(rawValue).trim().replace(/\s+/g, "").replace(",", ".");
+        if (!text) return null;
+
+        text = text.replace(/^[+-]/, "");
+        const mantissa = text.split(/[eE]/)[0];
+        if (!mantissa || !/[0-9]/.test(mantissa)) return null;
+
+        const digitsOnly = mantissa.replace(".", "");
+        if (!/[1-9]/.test(digitsOnly)) return null;
+
+        const firstNonZero = digitsOnly.search(/[1-9]/);
+        if (mantissa.includes(".")) {
+          return digitsOnly.length - firstNonZero;
+        }
+
+        const lastNonZero = Math.max(...[...digitsOnly].map((digit, index) => /[1-9]/.test(digit) ? index : -1));
+        return lastNonZero - firstNonZero + 1;
+      }
+
+      function formatEquationNumber(value) {
+        if (!Number.isFinite(value)) return "no estimable";
+        if (Object.is(value, -0) || value === 0) return "0";
+
+        const significantDigits = Math.max(1, Math.min(12, state.minInputSigFigs || 6));
+        const abs = Math.abs(value);
+        let text;
+
+        if (abs >= 1e6 || abs < 1e-4) {
+          text = value.toExponential(significantDigits - 1);
+          text = text.replace(/e\+?(-?)(\d+)/i, (_, negative, exponent) => `e${negative ? "−" : ""}${exponent}`);
+        } else {
+          text = value.toPrecision(significantDigits);
+          if (text.includes("e")) {
+            text = text.replace(/e\+?(-?)(\d+)/i, (_, negative, exponent) => `e${negative ? "−" : ""}${exponent}`);
+          }
+        }
+
+        return text.replace("-", "−").replace(".", ",");
       }
 
       function addDataRow(x = "", y = "") {
@@ -721,6 +763,7 @@
       function readPoints() {
         const rows = [...el.rows.querySelectorAll(".pxy-data-row")];
         const points = [];
+        const significantFigures = [];
 
         for (let index = 0; index < rows.length; index += 1) {
           const xRaw = rows[index].querySelector(".pxy-x").value;
@@ -735,12 +778,22 @@
           if (Number.isNaN(x) || Number.isNaN(y)) {
             throw new Error(`La fila ${index + 1} contiene un número no válido.`);
           }
+
+          const xSigFigs = x !== 0 ? countSignificantFigures(xRaw) : null;
+          const ySigFigs = y !== 0 ? countSignificantFigures(yRaw) : null;
+          if (xSigFigs) significantFigures.push(xSigFigs);
+          if (ySigFigs) significantFigures.push(ySigFigs);
+
           points.push({ x, y });
         }
 
         if (points.length < 2) {
           throw new Error("Ingrese al menos dos pares de datos completos.");
         }
+
+        state.minInputSigFigs = significantFigures.length > 0
+          ? Math.min(...significantFigures)
+          : 6;
         return points;
       }
 
@@ -945,7 +998,7 @@
           };
 
           const sign = intercept < 0 ? "−" : "+";
-          const equation = `y = (${formatPair(slope, uSlope)}) · x ${sign} (${formatPair(Math.abs(intercept), uIntercept)})`;
+          const equation = `y = ${formatEquationNumber(slope)} · x ${sign} ${formatEquationNumber(Math.abs(intercept))}`;
           showFitResult(
             "Ajuste lineal",
             equation,
@@ -985,7 +1038,7 @@
 
           const bSign = b < 0 ? "−" : "+";
           const cSign = c < 0 ? "−" : "+";
-          const equation = `y = (${formatPair(a, uA)}) · x² ${bSign} (${formatPair(Math.abs(b), uB)}) · x ${cSign} (${formatPair(Math.abs(c), uC)})`;
+          const equation = `y = ${formatEquationNumber(a)} · x² ${bSign} ${formatEquationNumber(Math.abs(b))} · x ${cSign} ${formatEquationNumber(Math.abs(c))}`;
           showFitResult(
             "Ajuste cuadrático",
             equation,
@@ -994,8 +1047,7 @@
               ["Coeficiente b", formatPair(b, uB)],
               ["Coeficiente c", formatPair(c, uC)],
               ["R²", formatSmart(ols.r2, 6)],
-              ["Error residual s", formatSmart(ols.residualStd, 4)],
-              ["Grados de libertad", String(ols.df)]
+              ["Error residual s", formatSmart(ols.residualStd, 4)]
             ],
             ols.df > 0
               ? "Incertidumbres: errores estándar de 1σ de los coeficientes del polinomio."
@@ -1036,7 +1088,7 @@
             stats: { ...ols, r2Original }
           };
 
-          const equation = `y = (${formatPair(A, uA)}) · e<sup>[(${formatPair(k, uK)}) · x]</sup>`;
+          const equation = `y = ${formatEquationNumber(A)} · e<sup>[${formatEquationNumber(k)} · x]</sup>`;
           showFitResult(
             "Ajuste exponencial",
             equation,
