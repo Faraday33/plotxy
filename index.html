@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Curso de Física 2EMS - Prof. Mag. Bernardo Pombo· Gráficas XY</title>
+<title>Curso de Física · Gráficas XY</title>
 <style>body{margin:0;padding:12px;background:#f2f6f7}</style>
 </head>
 <body>
@@ -276,6 +276,21 @@
       accent-color: var(--pxy-accent);
     }
 
+    #pxy-widget .pxy-axis-options {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px 16px;
+      margin-top: 14px;
+      padding: 12px 14px;
+      border: 1px solid var(--pxy-border);
+      border-radius: 12px;
+      background: var(--pxy-soft);
+    }
+
+    #pxy-widget .pxy-axis-options .pxy-checkline {
+      margin-top: 0;
+    }
+
     #pxy-widget .pxy-message {
       display: none;
       margin-top: 14px;
@@ -437,6 +452,10 @@
         grid-template-columns: 1fr;
       }
 
+      #pxy-widget .pxy-axis-options {
+        grid-template-columns: 1fr;
+      }
+
       #pxy-widget .pxy-main {
         gap: 14px;
         padding: 12px;
@@ -499,7 +518,7 @@
 
   <div class="pxy-shell">
     <header class="pxy-header">
-      <p class="pxy-kicker">Curso de Física 2EMS - Prof. Mag. Bernardo Pombo·</p>
+      <p class="pxy-kicker">Curso de Física</p>
       <h2>Gráficas XY</h2>
       <p class="pxy-subtitle">
         Ingrese datos positivos o negativos, represéntelos y calcule ajustes lineales,
@@ -546,10 +565,20 @@
           <button id="pxy-load-pasted" class="pxy-secondary" type="button">Cargar datos pegados</button>
         </details>
 
-        <label class="pxy-checkline">
-          <input id="pxy-include-zero" type="checkbox" checked>
-          Incluir el cero en ambas escalas
-        </label>
+        <div class="pxy-axis-options" aria-label="Opciones de los ejes">
+          <label class="pxy-checkline">
+            <input id="pxy-include-zero" type="checkbox" checked>
+            Incluir el cero en ambas escalas
+          </label>
+          <label class="pxy-checkline">
+            <input id="pxy-invert-x" type="checkbox">
+            Invertir eje X
+          </label>
+          <label class="pxy-checkline">
+            <input id="pxy-invert-y" type="checkbox">
+            Invertir eje Y
+          </label>
+        </div>
 
         <div class="pxy-main-actions">
           <button id="pxy-plot" class="pxy-primary" type="button">Confirmar y graficar</button>
@@ -609,6 +638,8 @@
         pasteData: root.querySelector("#pxy-paste-data"),
         loadPasted: root.querySelector("#pxy-load-pasted"),
         includeZero: root.querySelector("#pxy-include-zero"),
+        invertX: root.querySelector("#pxy-invert-x"),
+        invertY: root.querySelector("#pxy-invert-y"),
         plot: root.querySelector("#pxy-plot"),
         reset: root.querySelector("#pxy-reset"),
         message: root.querySelector("#pxy-message"),
@@ -1408,8 +1439,14 @@
         const yScale = createScale(yValues, includeZero, mobile ? 5 : 7);
         state.scale = { x: xScale, y: yScale };
 
-        const mapX = value => margin.left + (value - xScale.min) / (xScale.max - xScale.min) * plotWidth;
-        const mapY = value => margin.top + (yScale.max - value) / (yScale.max - yScale.min) * plotHeight;
+        const invertX = el.invertX.checked;
+        const invertY = el.invertY.checked;
+        const mapX = invertX
+          ? value => margin.left + (xScale.max - value) / (xScale.max - xScale.min) * plotWidth
+          : value => margin.left + (value - xScale.min) / (xScale.max - xScale.min) * plotWidth;
+        const mapY = invertY
+          ? value => margin.top + (value - yScale.min) / (yScale.max - yScale.min) * plotHeight
+          : value => margin.top + (yScale.max - value) / (yScale.max - yScale.min) * plotHeight;
 
         ctx.clearRect(0, 0, width, height);
         ctx.fillStyle = "#ffffff";
@@ -1421,7 +1458,7 @@
         ctx.clip();
 
         drawGrid(ctx, xScale, yScale, mapX, mapY, margin, plotWidth, plotHeight);
-        drawAxes(ctx, xScale, yScale, mapX, mapY, margin, plotWidth, plotHeight);
+        drawAxes(ctx, xScale, yScale, mapX, mapY, margin, plotWidth, plotHeight, invertX, invertY);
 
         if (state.fit) {
           drawFitCurve(ctx, state.fit, xScale, yScale, mapX, mapY);
@@ -1457,9 +1494,27 @@
         ctx.restore();
       }
 
-      function drawAxes(ctx, xScale, yScale, mapX, mapY, margin, plotWidth, plotHeight) {
-        const xAxisY = yScale.min <= 0 && yScale.max >= 0 ? mapY(0) : margin.top + plotHeight;
-        const yAxisX = xScale.min <= 0 && xScale.max >= 0 ? mapX(0) : margin.left;
+      function drawAxes(ctx, xScale, yScale, mapX, mapY, margin, plotWidth, plotHeight, invertX, invertY) {
+        // Si el cero no pertenece a la escala, el eje se dibuja sobre el borde
+        // que queda geométricamente más próximo a cero. Esto también respeta
+        // la orientación elegida al invertir cualquiera de los ejes.
+        let xAxisY;
+        if (yScale.min <= 0 && yScale.max >= 0) {
+          xAxisY = mapY(0);
+        } else if (yScale.min > 0) {
+          xAxisY = mapY(yScale.min);
+        } else {
+          xAxisY = mapY(yScale.max);
+        }
+
+        let yAxisX;
+        if (xScale.min <= 0 && xScale.max >= 0) {
+          yAxisX = mapX(0);
+        } else if (xScale.min > 0) {
+          yAxisX = mapX(xScale.min);
+        } else {
+          yAxisX = mapX(xScale.max);
+        }
 
         ctx.save();
         ctx.strokeStyle = "#243e48";
@@ -1471,22 +1526,26 @@
         ctx.lineTo(yAxisX, margin.top + plotHeight);
         ctx.stroke();
 
-        // Puntas de flecha en el sentido positivo de los ejes.
+        // Puntas de flecha: siempre señalan el sentido de crecimiento de la
+        // coordenada. Al invertir un eje, la punta cambia al extremo opuesto.
         const arrowSize = 8;
-        const xTip = margin.left + plotWidth;
         ctx.fillStyle = "#243e48";
+
+        const xTip = invertX ? margin.left : margin.left + plotWidth;
+        const xDirection = invertX ? 1 : -1;
         ctx.beginPath();
         ctx.moveTo(xTip, xAxisY);
-        ctx.lineTo(xTip - arrowSize, xAxisY - arrowSize * 0.58);
-        ctx.lineTo(xTip - arrowSize, xAxisY + arrowSize * 0.58);
+        ctx.lineTo(xTip + xDirection * arrowSize, xAxisY - arrowSize * 0.58);
+        ctx.lineTo(xTip + xDirection * arrowSize, xAxisY + arrowSize * 0.58);
         ctx.closePath();
         ctx.fill();
 
-        const yTip = margin.top;
+        const yTip = invertY ? margin.top + plotHeight : margin.top;
+        const yDirection = invertY ? -1 : 1;
         ctx.beginPath();
         ctx.moveTo(yAxisX, yTip);
-        ctx.lineTo(yAxisX - arrowSize * 0.58, yTip + arrowSize);
-        ctx.lineTo(yAxisX + arrowSize * 0.58, yTip + arrowSize);
+        ctx.lineTo(yAxisX - arrowSize * 0.58, yTip + yDirection * arrowSize);
+        ctx.lineTo(yAxisX + arrowSize * 0.58, yTip + yDirection * arrowSize);
         ctx.closePath();
         ctx.fill();
 
@@ -1647,6 +1706,8 @@
         el.labelX.value = "x";
         el.labelY.value = "y";
         el.includeZero.checked = true;
+        el.invertX.checked = false;
+        el.invertY.checked = false;
         el.pasteData.value = "";
         el.rows.innerHTML = "";
         for (let i = 0; i < 4; i += 1) addDataRow();
@@ -1678,6 +1739,8 @@
       el.downloadPng.addEventListener("click", downloadPng);
       el.reset.addEventListener("click", resetAll);
       el.includeZero.addEventListener("change", draw);
+      el.invertX.addEventListener("change", draw);
+      el.invertY.addEventListener("change", draw);
 
       let resizeTimer = null;
       const scheduleDraw = () => {
