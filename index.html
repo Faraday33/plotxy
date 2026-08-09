@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Curso de Física · Gráficas XY</title>
+<title>Curso de Física 2EMS - Prof. Mag. Bernardo Pombo
+Gráficas XY - v9826</title>
 <style>body{margin:0;padding:12px;background:#f2f6f7}</style>
 </head>
 <body>
@@ -519,11 +520,10 @@
   <div class="pxy-shell">
     <header class="pxy-header">
       <p class="pxy-kicker">Curso de Física 2EMS - Prof. Mag. Bernardo Pombo</p>
-      <h2>Gráficas XY - v7826</h2>
+      <h2>Gráficas XY - v9826</h2>
       <p class="pxy-subtitle">
         Ingrese datos positivos o negativos, represéntelos y calcule ajustes lineales,
-        cuadráticos o exponenciales con incertidumbres estadísticas. 
-        Puedes invertir tanto el eje X como el eje y.
+        cuadráticos o exponenciales con incertidumbres estadísticas.
       </p>
     </header>
 
@@ -690,6 +690,20 @@
       function extractUnit(label) {
         const match = String(label).trim().match(/\(([^()]*)\)\s*$/);
         return match ? match[1].trim() : "";
+      }
+
+      // Devuelve la magnitud escrita en la etiqueta, quitando únicamente
+      // la unidad final entre paréntesis. Ejemplos:
+      //   "t(s)"   -> "t"
+      //   "t (s)"  -> "t"
+      //   "x (m)"  -> "x"
+      //   "Energía (J)" -> "Energía"
+      function extractQuantityLabel(label, fallback) {
+        const quantity = String(label)
+          .trim()
+          .replace(/\s*\([^()]*\)\s*$/, "")
+          .trim();
+        return quantity || fallback;
       }
 
       function superscriptInteger(value) {
@@ -1192,10 +1206,12 @@
           };
 
           const units = getAdjustmentUnits();
+          const xQuantity = escapeHtml(extractQuantityLabel(state.labels.x, "x"));
+          const yQuantity = escapeHtml(extractQuantityLabel(state.labels.y, "y"));
           const shownSlope = roundEquationValue(slope);
           const shownIntercept = roundEquationValue(intercept);
           const sign = shownIntercept < 0 ? "−" : "+";
-          const equation = `y = ${formatEquationNumber(shownSlope)} · x ${sign} ${formatEquationNumber(Math.abs(shownIntercept))}`;
+          const equation = `${yQuantity} = ${formatEquationNumber(shownSlope)} · ${xQuantity} ${sign} ${formatEquationNumber(Math.abs(shownIntercept))}`;
           showFitResult(
             "Ajuste lineal",
             equation,
@@ -1234,12 +1250,14 @@
             stats: ols
           };
 
+          const xQuantity = escapeHtml(extractQuantityLabel(state.labels.x, "x"));
+          const yQuantity = escapeHtml(extractQuantityLabel(state.labels.y, "y"));
           const shownA = roundEquationValue(a);
           const shownB = roundEquationValue(b);
           const shownC = roundEquationValue(c);
           const bSign = shownB < 0 ? "−" : "+";
           const cSign = shownC < 0 ? "−" : "+";
-          const equation = `y = ${formatEquationNumber(shownA)} · x² ${bSign} ${formatEquationNumber(Math.abs(shownB))} · x ${cSign} ${formatEquationNumber(Math.abs(shownC))}`;
+          const equation = `${yQuantity} = ${formatEquationNumber(shownA)} · ${xQuantity}² ${bSign} ${formatEquationNumber(Math.abs(shownB))} · ${xQuantity} ${cSign} ${formatEquationNumber(Math.abs(shownC))}`;
           showFitResult(
             "Ajuste cuadrático",
             equation,
@@ -1290,20 +1308,24 @@
             stats: { ...ols, r2Original }
           };
 
-          const equation = `y = ${formatEquationNumber(A)} · e<sup>[${formatEquationNumber(k)} · x]</sup>`;
+          const xQuantityRaw = extractQuantityLabel(state.labels.x, "x");
+          const yQuantityRaw = extractQuantityLabel(state.labels.y, "y");
+          const xQuantity = escapeHtml(xQuantityRaw);
+          const yQuantity = escapeHtml(yQuantityRaw);
+          const equation = `${yQuantity} = ${formatEquationNumber(A)} · e<sup>[${formatEquationNumber(k)} · ${xQuantity}]</sup>`;
           showFitResult(
             "Ajuste exponencial",
             equation,
             [
               ["Amplitud A", formatPairWithUnit(A, uA, units.exponentialA)],
               ["Constante k", formatPairWithUnit(k, uK, units.exponentialK)],
-              ["R² en y", formatSmart(r2Original, 6)],
-              ["R² en ln(y)", formatSmart(ols.r2, 6)],
+              [`R² en ${yQuantityRaw}`, formatSmart(r2Original, 6)],
+              [`R² en ln(${yQuantityRaw})`, formatSmart(ols.r2, 6)],
               ["Error residual en ln(y)", formatWithUnit(formatSmart(ols.residualStd, 4), "1")],
               ["Grados de libertad", String(ols.df)]
             ],
             ols.df > 0
-              ? "El ajuste se realiza por regresión lineal de ln(y) respecto de x. Las incertidumbres son errores estándar de 1σ; u(A) se obtiene por propagación desde ln(A)."
+              ? `El ajuste se realiza por regresión lineal de ln(${yQuantityRaw}) respecto de ${xQuantityRaw}. Las incertidumbres son errores estándar de 1σ; u(A) se obtiene por propagación desde ln(A).`
               : "Con dos puntos no hay grados de libertad para estimar las incertidumbres del ajuste exponencial."
           );
           draw();
