@@ -3,13 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Curso de Física 2EMS - Prof. Mag. Bernardo Pombo
-Gráficas XY - v9826</title>
+<title>Curso de Física · Gráficas XY · v211026</title>
 <style>body{margin:0;padding:12px;background:#f2f6f7}</style>
 </head>
 <body>
 <!--
-  CURSO DE FÍSICA · GRÁFICAS XY
+  CURSO DE FÍSICA · GRÁFICAS XY · v211026
   Aplicación web autónoma para publicar mediante GitHub Pages e insertar en Blogger.
   No requiere bibliotecas externas ni envía datos a servidores.
 -->
@@ -64,11 +63,34 @@ Gráficas XY - v9826</title>
       opacity: 0.84;
     }
 
+    #pxy-widget .pxy-title-row {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
     #pxy-widget h2 {
       margin: 0;
       color: inherit;
       font-size: clamp(1.7rem, 5vw, 2.55rem);
       line-height: 1.1;
+    }
+
+    #pxy-widget .pxy-version {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 8px;
+      border: 1px solid rgba(255, 255, 255, 0.34);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.14);
+      color: #fff;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      line-height: 1;
+      white-space: nowrap;
+      opacity: 0.92;
     }
 
     #pxy-widget .pxy-subtitle {
@@ -289,6 +311,18 @@ Gráficas XY - v9826</title>
     }
 
     #pxy-widget .pxy-axis-options .pxy-checkline {
+      margin-top: 0;
+    }
+
+    #pxy-widget .pxy-fit-options {
+      margin-top: 10px;
+      padding: 11px 13px;
+      border: 1px solid var(--pxy-border);
+      border-radius: 12px;
+      background: var(--pxy-soft);
+    }
+
+    #pxy-widget .pxy-fit-options .pxy-checkline {
       margin-top: 0;
     }
 
@@ -519,8 +553,11 @@ Gráficas XY - v9826</title>
 
   <div class="pxy-shell">
     <header class="pxy-header">
-      <p class="pxy-kicker">Curso de Física 2EMS - Prof. Mag. Bernardo Pombo</p>
-      <h2>Gráficas XY - v9826</h2>
+      <p class="pxy-kicker">Curso de Física</p>
+      <div class="pxy-title-row">
+        <h2>Gráficas XY</h2>
+        <span class="pxy-version" aria-label="Versión v211026">v211026</span>
+      </div>
       <p class="pxy-subtitle">
         Ingrese datos positivos o negativos, represéntelos y calcule ajustes lineales,
         cuadráticos o exponenciales con incertidumbres estadísticas.
@@ -601,6 +638,13 @@ Gráficas XY - v9826</title>
           <button id="pxy-fit-exponential" class="pxy-secondary" type="button" disabled>Exponencial</button>
         </div>
 
+        <div class="pxy-fit-options" aria-label="Opciones del ajuste lineal">
+          <label class="pxy-checkline">
+            <input id="pxy-force-origin" type="checkbox">
+            Forzar ajuste lineal a pasar por el origen (B = 0)
+          </label>
+        </div>
+
         <div id="pxy-results" class="pxy-results" aria-live="polite">
           <p id="pxy-equation" class="pxy-equation"></p>
           <div id="pxy-stats" class="pxy-stats-grid"></div>
@@ -647,6 +691,7 @@ Gráficas XY - v9826</title>
         canvasWrap: root.querySelector("#pxy-canvas-wrap"),
         canvas: root.querySelector("#pxy-canvas"),
         fitLinear: root.querySelector("#pxy-fit-linear"),
+        forceOrigin: root.querySelector("#pxy-force-origin"),
         fitQuadratic: root.querySelector("#pxy-fit-quadratic"),
         fitExponential: root.querySelector("#pxy-fit-exponential"),
         results: root.querySelector("#pxy-results"),
@@ -1193,40 +1238,87 @@ Gráficas XY - v9826</title>
         try {
           const x = state.points.map(point => point.x);
           const y = state.points.map(point => point.y);
-          const design = x.map(value => [1, value]);
-          const ols = fitOLS(design, y);
-          const [intercept, slope] = ols.beta;
-          const [uIntercept, uSlope] = ols.standardErrors;
-
-          state.fit = {
-            type: "linear",
-            predict: value => intercept + slope * value,
-            coefficients: { intercept, slope, uIntercept, uSlope },
-            stats: ols
-          };
-
+          const forceOrigin = el.forceOrigin.checked;
           const units = getAdjustmentUnits();
           const xQuantity = escapeHtml(extractQuantityLabel(state.labels.x, "x"));
           const yQuantity = escapeHtml(extractQuantityLabel(state.labels.y, "y"));
-          const shownSlope = roundEquationValue(slope);
-          const shownIntercept = roundEquationValue(intercept);
-          const sign = shownIntercept < 0 ? "−" : "+";
-          const equation = `${yQuantity} = ${formatEquationNumber(shownSlope)} · ${xQuantity} ${sign} ${formatEquationNumber(Math.abs(shownIntercept))}`;
-          showFitResult(
-            "Ajuste lineal",
-            equation,
-            [
-              ["Pendiente m", formatPairWithUnit(slope, uSlope, units.linearSlope)],
-              ["Ordenada b", formatPairWithUnit(intercept, uIntercept, units.linearIntercept)],
-              ["R²", formatSmart(ols.r2, 6)],
-              ["Error residual s", formatValueWithUnit(ols.residualStd, 4, units.residual)],
-              ["Datos n", String(state.points.length)],
-              ["Grados de libertad", String(ols.df)]
-            ],
-            ols.df > 0
-              ? "Incertidumbres: errores estándar de 1σ, estimados a partir de los residuos del ajuste."
-              : "Con dos puntos la recta queda determinada exactamente, pero no hay grados de libertad para estimar las incertidumbres."
-          );
+
+          if (forceOrigin) {
+            // Modelo restringido: Y = A·X, con B fijado exactamente en cero.
+            // La estimación de A por mínimos cuadrados es equivalente a
+            // A = Σ(x·y) / Σ(x²). fitOLS permite además obtener su error estándar.
+            const design = x.map(value => [value]);
+            const ols = fitOLS(design, y);
+            const slope = ols.beta[0];
+            const uSlope = ols.standardErrors[0];
+            const intercept = 0;
+            const shownSlope = roundEquationValue(slope);
+
+            // En un modelo sin término independiente se usa R² no centrado:
+            // 1 - SSE / Σ(y²). No es directamente comparable con el R²
+            // centrado del ajuste lineal ordinario.
+            const sstOrigin = y.reduce((sum, value) => sum + value * value, 0);
+            const r2Origin = sstOrigin > 1e-20
+              ? 1 - ols.sse / sstOrigin
+              : (ols.sse < 1e-20 ? 1 : NaN);
+
+            state.fit = {
+              type: "linear-origin",
+              predict: value => slope * value,
+              coefficients: { intercept, slope, uIntercept: 0, uSlope },
+              stats: { ...ols, r2Origin }
+            };
+
+            const equation = `${yQuantity} = ${formatEquationNumber(shownSlope)} · ${xQuantity} + 0`;
+            showFitResult(
+              "Ajuste lineal por el origen",
+              equation,
+              [
+                ["Pendiente A", formatPairWithUnit(slope, uSlope, units.linearSlope)],
+                ["Ordenada B", `${formatWithUnit("0", units.linearIntercept)} (fijado)`],
+                ["R² (origen)", formatSmart(r2Origin, 6)],
+                ["Error residual s", formatValueWithUnit(ols.residualStd, 4, units.residual)],
+                ["Datos n", String(state.points.length)],
+                ["Grados de libertad", String(ols.df)]
+              ],
+              ols.df > 0
+                ? "Se ha fijado B = 0 y la recta pasa exactamente por el origen. La incertidumbre de A es el error estándar de 1σ. El R² mostrado es no centrado, apropiado para un ajuste sin término independiente."
+                : "Se ha fijado B = 0. Con un único parámetro libre y un número insuficiente de grados de libertad, la incertidumbre de A no puede estimarse a partir de los residuos."
+            );
+          } else {
+            const design = x.map(value => [1, value]);
+            const ols = fitOLS(design, y);
+            const [intercept, slope] = ols.beta;
+            const [uIntercept, uSlope] = ols.standardErrors;
+
+            state.fit = {
+              type: "linear",
+              predict: value => intercept + slope * value,
+              coefficients: { intercept, slope, uIntercept, uSlope },
+              stats: ols
+            };
+
+            const shownSlope = roundEquationValue(slope);
+            const shownIntercept = roundEquationValue(intercept);
+            const sign = shownIntercept < 0 ? "−" : "+";
+            const equation = `${yQuantity} = ${formatEquationNumber(shownSlope)} · ${xQuantity} ${sign} ${formatEquationNumber(Math.abs(shownIntercept))}`;
+            showFitResult(
+              "Ajuste lineal",
+              equation,
+              [
+                ["Pendiente A", formatPairWithUnit(slope, uSlope, units.linearSlope)],
+                ["Ordenada B", formatPairWithUnit(intercept, uIntercept, units.linearIntercept)],
+                ["R²", formatSmart(ols.r2, 6)],
+                ["Error residual s", formatValueWithUnit(ols.residualStd, 4, units.residual)],
+                ["Datos n", String(state.points.length)],
+                ["Grados de libertad", String(ols.df)]
+              ],
+              ols.df > 0
+                ? "Incertidumbres: errores estándar de 1σ, estimados a partir de los residuos del ajuste."
+                : "Con dos puntos la recta queda determinada exactamente, pero no hay grados de libertad para estimar las incertidumbres."
+            );
+          }
+
           draw();
         } catch (error) {
           showMessage(error.message);
@@ -1731,6 +1823,7 @@ Gráficas XY - v9826</title>
         el.includeZero.checked = true;
         el.invertX.checked = false;
         el.invertY.checked = false;
+        el.forceOrigin.checked = false;
         el.pasteData.value = "";
         el.rows.innerHTML = "";
         for (let i = 0; i < 4; i += 1) addDataRow();
@@ -1756,6 +1849,11 @@ Gráficas XY - v9826</title>
       el.loadPasted.addEventListener("click", loadPastedData);
       el.plot.addEventListener("click", plotData);
       el.fitLinear.addEventListener("click", fitLinear);
+      el.forceOrigin.addEventListener("change", () => {
+        if (state.fit && (state.fit.type === "linear" || state.fit.type === "linear-origin")) {
+          fitLinear();
+        }
+      });
       el.fitQuadratic.addEventListener("click", fitQuadratic);
       el.fitExponential.addEventListener("click", fitExponential);
       el.downloadData.addEventListener("click", downloadData);
